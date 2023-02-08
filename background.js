@@ -13,6 +13,50 @@ browser.runtime.onMessage.addListener((request, sender) => {
 
 });
 
+function initMemory() {
+  chrome.system.memory.getInfo(function (memoryInfo) {
+    let systemAvailableCapacity = (memoryInfo.availableCapacity / (1024 ** 3)).toFixed(2);
+    let systemCapacity = (memoryInfo.capacity / (1024 ** 3)).toFixed(2);
+    let systemInfo = { systemCapacity: systemCapacity, systemAvailableCapacity: systemAvailableCapacity }
+    return systemInfo;
+  });
+}
+
+function getSystemMemoryInfo() {
+  let systemInfo = {};
+  if (window.navigator.deviceMemory) {
+    systemInfo.systemCapacity = `${window.navigator.deviceMemory} GB`;
+  } else {
+    systemInfo.systemCapacity = "Information not available.";
+  }
+
+  try {
+    let memory = window.performance.memory;
+    systemInfo.systemAvailableCapacity = `${((memory.totalJSHeapSize - memory.usedJSHeapSize) / (1024 ** 2)).toFixed(2)} MB`;
+  } catch (e) {
+    systemInfo.systemAvailableCapacity = "Information not available.";
+  }
+  return systemInfo;
+}
+
+async function getCpuInfo() {
+  return new Promise((resolve, reject) => {
+    chrome.system.cpu.getInfo(function (info) {
+      if (info) {
+        var cpuName = info.modelName;
+        var cpuArch = info.archName.replace(/_/g, '-');
+        var cpuFeatures = info.features.join(' ').toUpperCase().replace(/_/g, '.') || '-';
+        var cpuNumOfProcessors = info.numOfProcessors;
+        var cpuProcessors = info.processors;
+
+        let cpuInformation = { cpuName: cpuName, cpuArch: cpuArch, cpuFeatures: cpuFeatures, cpuNumOfProcessors: cpuNumOfProcessors, cpuProcessors: cpuProcessors }
+        resolve(cpuInformation);
+      } else {
+        reject(new Error('Unable to get CPU information'));
+      }
+    });
+  });
+}
 // cache eviction
 browser.tabs.onRemoved.addListener(tabId => {
   localStorage.removeItem("displayData");
@@ -34,8 +78,14 @@ function set(id, start, end, noacc) {
   return displayData;
 }
 
-function get(t) {
+async function get(t) {
   
+  const connection = window.navigator.connection || window.navigator.mozConnection || null;
+
+  // initMemory()
+  var systemInfo = getSystemMemoryInfo();
+  let cpuInformation = await getCpuInfo();
+
   var displayData = "";
   
   // https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/NavigationTiming/Overview.html#processing-model
@@ -61,9 +111,29 @@ function get(t) {
   displayData += ',';
   displayData += set('load', t.loadEventStart, t.loadEventEnd);
   displayData += ',';
-  displayData += Math.round(t.duration);
+  displayData += connection.effectiveType;
+  displayData += ',';
+  displayData += connection.downlink;
+  displayData += ',';
+  displayData += connection.rtt;
+  displayData += ',';
+  displayData += systemInfo.systemCapacity;
+  displayData += ',';
+  displayData += systemInfo.systemAvailableCapacity;
+  displayData += ',';
+  displayData += JSON.stringify(cpuInformation.cpuName);
+  displayData += ',';
+  displayData += JSON.stringify(cpuInformation.cpuArch)
+  displayData += ',';
+  displayData += JSON.stringify(cpuInformation.cpuFeatures);
+  displayData += ',';
+  displayData += JSON.stringify(cpuInformation.cpuNumOfProcessors);
+  displayData += ',';
+  displayData += JSON.stringify(cpuInformation.cpuProcessors).replace(/,/g, " ");
   displayData += ',';
   displayData += new Date(t.start).toString();
+  displayData += ',';
+  displayData += Math.round(t.duration);
   displayData += ',';
   displayData += JSON.stringify(t.name);
   
@@ -74,15 +144,40 @@ function get(t) {
 
 function saveData(displayData) {
   var data = "";
-  for (let i = 0; i < (displayData.length - 3); i++) {
+  for (let i = 0; i <= 10; i++) {
     data = data + displayData[i].split(' ')[1] + ',';
   }
-  data = data + displayData[displayData.length - 1] + ';\n'
+  for (let i = 11; i < (displayData.length - 2); i++) {
+    data = data + displayData[i] + ',';
+  }
+  data = data + extractDomain(displayData[displayData.length - 1]) + ';\n'
   
   previousData = localStorage.getItem("testData");
   if (previousData == null) {
     localStorage.setItem("testData", data)
   } else {
     localStorage.setItem("testData", previousData + data)
+  }
+
+
+  // function extractDomain(url) {
+  //   let domain;
+  //   if (url.indexOf("://") > -1) {
+  //     domain = url.split("/")[2];
+  //   } else {
+  //     domain = url.split("/")[0];
+  //   }
+  //   domain = domain.split(":")[0];
+  
+  //   return domain.split(".")
+  //     .slice(-2)
+  //     .join(".");
+  // }
+
+  function extractDomain(url) {
+    let protocolIndex = url.indexOf("://");
+    let domainIndex = url.indexOf("/", protocolIndex + 3);
+    let domain = url.substring(1, domainIndex);
+    return domain;
   }
 }

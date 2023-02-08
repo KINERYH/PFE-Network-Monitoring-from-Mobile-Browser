@@ -14,7 +14,7 @@
     "matches": ["*://*/*"],
     "js": ["browser-polyfill.min.js", "performance.js"]
   }],
-  "permissions": ["activeTab", "storage", "downloads"],
+  "permissions": ["activeTab", "storage", "downloads", "processes",  "system.cpu", "system.memory"],
   "icons": {
     "16": "stopwatch16.png",
     "48": "stopwatch48.png",

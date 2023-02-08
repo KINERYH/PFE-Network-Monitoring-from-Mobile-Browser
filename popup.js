@@ -40,16 +40,17 @@ function displayDataOnTab() {
   set('domSubRes', displayData[9]);
   set('load', displayData[10]);
   document.getElementById("total").innerHTML = Math.round(total);
-  document.getElementById("requestStart").innerHTML = new Date(displayData[displayData.length - 1]).toString();
+  document.getElementById("requestStart").innerHTML = new Date(displayData[displayData.length - 3]).toString();
 }
 
 downloadBtn.addEventListener('click', function() {
   testData = localStorage.getItem("testData");
+  
   if (testData != null) {
     document.getElementById("test").innerHTML = testData;
 
     // Save as file
-    var header = "redirect,dns,connect,request,response,dom,domParse,domScripts,contentLoaded,domSubRes,load,name;\n";
+    var header = "redirect,dns,connect,request,response,dom,domParse,domScripts,contentLoaded,domSubRes,load,effectiveType,downlink,rtt,systemCapacity,systemAvailableCapacity,cpuName,cpuArch,cpuFeatures,cpuNumOfProcessors,cpuProcessors,name;\n";
     var url = 'data:application/plain;base64,' + btoa(header + testData);
     chrome.downloads.download({
         url: url,
