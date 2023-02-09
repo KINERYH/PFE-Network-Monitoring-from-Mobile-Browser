@@ -14,12 +14,12 @@ browser.runtime.onMessage.addListener((request, sender) => {
 });
 
 function initMemory() {
+  let systemInfo = {};
   chrome.system.memory.getInfo(function (memoryInfo) {
-    let systemAvailableCapacity = (memoryInfo.availableCapacity / (1024 ** 3)).toFixed(2);
-    let systemCapacity = (memoryInfo.capacity / (1024 ** 3)).toFixed(2);
-    let systemInfo = { systemCapacity: systemCapacity, systemAvailableCapacity: systemAvailableCapacity }
-    return systemInfo;
+    systemInfo.systemAvailableCapacity = (memoryInfo.availableCapacity / (1024 ** 3)).toFixed(2);
+    systemInfo.systemCapacity = (memoryInfo.capacity / (1024 ** 3)).toFixed(2);
   });
+  return systemInfo;
 }
 
 function getSystemMemoryInfo() {
@@ -82,10 +82,10 @@ async function get(t) {
   
   const connection = window.navigator.connection || window.navigator.mozConnection || null;
 
-  // initMemory()
-  var systemInfo = getSystemMemoryInfo();
+  var systemInfo = initMemory();
+  // var systemInfo = getSystemMemoryInfo();
   let cpuInformation = await getCpuInfo();
-
+  
   var displayData = "";
   
   // https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/NavigationTiming/Overview.html#processing-model

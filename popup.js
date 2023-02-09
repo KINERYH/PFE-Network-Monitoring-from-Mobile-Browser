@@ -50,10 +50,12 @@ downloadBtn.addEventListener('click', function() {
     document.getElementById("test").innerHTML = testData;
 
     // Save as file
-    var header = "redirect,dns,connect,request,response,dom,domParse,domScripts,contentLoaded,domSubRes,load,effectiveType,downlink,rtt,systemCapacity,systemAvailableCapacity,cpuName,cpuArch,cpuFeatures,cpuNumOfProcessors,cpuProcessors,name;\n";
+    var header = "redirect,dns,connect,request,response,dom,domParse,domScripts,contentLoaded,domSubRes,load,effectiveType,downlink,rtt,systemCapacity,systemAvailableCapacity,cpuName,cpuArch,cpuFeatures,cpuNumOfProcessors,cpuProcessors,date,name;\n";
     var url = 'data:application/plain;base64,' + btoa(header + testData);
+    // var url = "data:text/csv;charset=utf-8," + encodeURI(header + testData);
     chrome.downloads.download({
         url: url,
+        // filename: 'testData/testRecord.csv'
         filename: 'testData/testRecord.txt'
     });
 
