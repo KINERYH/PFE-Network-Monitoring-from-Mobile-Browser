@@ -158,6 +158,7 @@ function saveData(displayData) {
   } else {
     localStorage.setItem("testData", previousData + data)
   }
+}
 
 
   // function extractDomain(url) {
@@ -180,4 +181,3 @@ function saveData(displayData) {
     let domain = url.substring(1, domainIndex);
     return domain;
   }
-}
