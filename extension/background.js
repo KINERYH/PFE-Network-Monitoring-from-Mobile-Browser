@@ -1,17 +1,82 @@
+/* The logic behind the automated browsing is:
+1) Close the previous tab (if it's not the only tab open)
+2) Load the current page
+3) Carry out the measurements
+4) Save the measurements
+5) Open a new tab
+*/
+
+// Flag for browsing automation (ANCORA DA INTEGRARE)
+const automation = true;
+
+// List of websites for browsing automation
+const websitesList = [
+  'https://www.google.com',
+  'https://www.youtube.com',
+  // 'https://www.baidu.com',
+  // 'https://www.bilibili.com',
+  // 'https://www.qq.com',
+  // 'https://www.twitter.com',
+  // 'https://www.zhihu.com',
+  // 'https://www.wikipedia.org',
+  // 'https://www.amazon.com',
+  // 'https://www.instagram.com',
+  'https://www.linkedin.com'
+];
+
+
 // Setting a toolbar badge text
 browser.runtime.onMessage.addListener((request, sender) => {
   // This cache stores page load time for each tab, so they don't interfere
   browser.storage.local.get('cache').then(data => {
+    closePreviousTab();
     if (!data.cache) data.cache = {};
     data.cache['tab' + sender.tab.id] = request.timing;
-    get(request.timing)
+    get(request.timing);
+    // Set the badge of the extension
     browser.storage.local.set(data).then(() => {
-      browser.browserAction.setBadgeText({text: request.time, tabId: sender.tab.id});
-      browser.browserAction.setPopup({tabId: sender.tab.id, popup: "popup.html"})
+      browser.browserAction.setBadgeText({ text: request.time, tabId: sender.tab.id });
+      browser.browserAction.setPopup({ tabId: sender.tab.id, popup: "popup.html" })
     });
   });
-
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    var currentTab = tabs[0];
+    console.log(currentTab.url)
+    openNewTab(currentTab.url);
+  })
 });
+
+
+function closePreviousTab() {
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    // If it's the only tab opened i don't close nothing (TO BE FIXED)
+    // if (tabs.length > 1) {
+    var activeTab = tabs[0];
+    chrome.tabs.query({ index: activeTab.index - 1 }, function (tabs) {
+      var previousTab = tabs[0];
+      chrome.tabs.remove(previousTab.id);
+    });
+    // }
+  });
+}
+
+function openNewTab(url) {
+  var domain = new URL(url).hostname;
+  var split = domain.split('.');
+  var mainDomain = split[split.length - 2];
+  var newIndex = 0;
+  // If the current url is in the list of websites, i select the next one
+  // Otherwise I start from the beginning of the list
+  websitesList.forEach((element, index) => {
+    let elementURL = new URL(element).hostname;
+    if (elementURL.includes(mainDomain)) {
+      newIndex = index + 1;
+    }
+  });
+  if(newIndex < websitesList.length){
+    window.open(websitesList[newIndex], "_blank");
+  }
+}
 
 function initMemory() {
   let systemInfo = {};
@@ -67,7 +132,7 @@ browser.tabs.onRemoved.addListener(tabId => {
 });
 
 function set(id, start, end, noacc) {
-  
+
   var displayData = "";
 
   displayData += Math.round(start);
@@ -79,15 +144,15 @@ function set(id, start, end, noacc) {
 }
 
 async function get(t) {
-  
+
   const connection = window.navigator.connection || window.navigator.mozConnection || null;
 
   var systemInfo = initMemory();
   // var systemInfo = getSystemMemoryInfo();
   let cpuInformation = await getCpuInfo();
-  
+
   var displayData = "";
-  
+
   // https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/NavigationTiming/Overview.html#processing-model
   displayData += set('redirect', t.redirectStart, t.redirectEnd);
   displayData += ',';
@@ -136,9 +201,9 @@ async function get(t) {
   displayData += Math.round(t.duration);
   displayData += ',';
   displayData += JSON.stringify(t.name);
-  
+
   localStorage.setItem("displayData", displayData)
-  
+
   saveData(displayData.split(','));
 }
 
@@ -151,7 +216,7 @@ function saveData(displayData) {
     data = data + displayData[i] + ',';
   }
   data = data + extractDomain(displayData[displayData.length - 1]) + ';\n'
-  
+
   previousData = localStorage.getItem("testData");
   if (previousData == null) {
     localStorage.setItem("testData", data)
@@ -168,7 +233,7 @@ function saveData(displayData) {
   //     domain = url.split("/")[0];
   //   }
   //   domain = domain.split(":")[0];
-  
+
   //   return domain.split(".")
   //     .slice(-2)
   //     .join(".");
