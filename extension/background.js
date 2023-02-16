@@ -25,15 +25,7 @@ localStorage.setItem("automation", "false");
 //   'linkedin.com'
 // ];
 
-// const websitesList = [
-//   'google.com',
-//   'youtube.com',
-//   'instagram.com',
-//   'twimg.com',
-//   'linkedin.com',
-//   'tistory.com',
-//   'qq.com'
-// ];
+// const websitesList = [ 'google.com', 'youtube.com', 'instagram.com', 'twimg.com', 'linkedin.com', 'tistory.com', 'qq.com'];
 
 const websitesList = ['google.com', 'zunaso.com', 'youtube.com', 'baidu.com', 'bilibili.com', 'facebook.com', 'qq.com', 'twitter.com', 'zhihu.com', 'wikipedia.org', 'amazon.com', 'instagram.com', 'linkedin.com', 'reddit.com', 'whatsapp.com', 'openai.com', 'yahoo.com', 'bing.com', 'taobao.com', '163.com', 'xvideos.com', 'live.com', 'pornhub.com', 'microsoft.com', 'vk.com', 'zoom.us', 'github.com', 'jd.com', 'weibo.com', 'tiktok.com', 'canva.com', 'csdn.net', 'fandom.com', 'office.com', 'naver.com', 'apple.com', 'aliexpress.com', 'yahoo.co.jp', 'xhamster.com', 'paypal.com', 'iqiyi.com', 'spankbang.com', 'pinterest.com', 'mail.ru', 'ebay.com', 'douban.com', 'msn.com', 'imdb.com', 'amazon.in', 'netflix.com', 'adobe.com', 'telegram.org', 'dzen.ru', 'quora.com', 'stackoverflow.com', 'spotify.com', 'aliyun.com', 'xnxx.com', 'myshopify.com', 'tmall.com', 'indeed.com', 'deepl.com', 'twimg.com', 'pixiv.net', 'feishu.cn', 'duckduckgo.com', 'amazon.co.jp', 'msn.cn', 'tencent.com', 'freepik.com', 'etsy.com', 'amazon.co.uk', 'booking.com', 'imgur.com', 'jianshu.com', 'ilovepdf.com', 'twitch.tv', 'atlassian.net', 'force.com', 'dropbox.com', 'office365.com', 'alipay.com', 'discord.com', 'namu.wiki', 't.me', 'wordpress.com', 'nih.gov', 'tradingview.com', 'avito.ru', '3dmgame.com', 'xiaohongshu.com', 'instructure.com', 'onlyfans.com', 'amazonaws.com', 'flipkart.com', 'hao123.com', 'alibaba.com', 'hupu.com', 'cnki.net', 'mediafire.com', 'tistory.com']
 
@@ -124,32 +116,34 @@ function automation() {
 }
 
 function openNewTab(newWebsiteIndex) {
-  var newWebsiteIndex = newWebsiteIndex + 1;
-  if (newWebsiteIndex < websitesList.length) {
-    localStorage.setItem("websiteIndex", newWebsiteIndex);
-    var websiteUrl = "https://www." + websitesList[newWebsiteIndex];
-    fetch(websiteUrl)
-      .then(response => {
-        if (response.status == 200) {
-          window.open(websiteUrl, "_blank");
-        } else {
+  setTimeout(() => {
+    newWebsiteIndex++;
+    if (newWebsiteIndex < websitesList.length) {
+      localStorage.setItem("websiteIndex", newWebsiteIndex);
+      var websiteUrl = "https://www." + websitesList[newWebsiteIndex];
+      fetch(websiteUrl)
+        .then(response => {
+          if (response.status == 200) {
+            window.open(websiteUrl, "_blank");
+          } else {
+            console.log("Error: website cannot be reached - closing tab");
+            openNewTab(newWebsiteIndex);
+          }
+        })
+        .catch(error => {
           console.log("Error: website cannot be reached - closing tab");
           openNewTab(newWebsiteIndex);
-        }
-      })
-      .catch(error => {
-        console.log("Error: website cannot be reached - closing tab");
-        openNewTab(newWebsiteIndex);
+        });
+
+    } else {
+      localStorage.setItem("websiteIndex", null);
+
+      localStorage.setItem("automation", "false");
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, { checkboxState: false });
       });
-
-  } else {
-    localStorage.setItem("websiteIndex", null);
-
-    localStorage.setItem("automation", "false");
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, { checkboxState: false });
-    });
-  }
+    }
+  }, 500);
 }
 
 function closePreviousTab() {
