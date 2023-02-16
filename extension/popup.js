@@ -1,5 +1,6 @@
 const downloadBtn = document.getElementById("download");
 const clearBtn = document.getElementById("clear");
+var automationCheckbox = document.getElementById("automation");
 
 var displayData = localStorage.getItem("displayData").split(',');
 var total = displayData[displayData.length - 2];
@@ -43,9 +44,9 @@ function displayDataOnTab() {
   document.getElementById("requestStart").innerHTML = new Date(displayData[displayData.length - 3]).toString();
 }
 
-downloadBtn.addEventListener('click', function() {
+downloadBtn.addEventListener('click', function () {
   testData = localStorage.getItem("testData");
-  
+
   if (testData != null) {
     document.getElementById("test").innerHTML = testData;
 
@@ -54,15 +55,30 @@ downloadBtn.addEventListener('click', function() {
     var url = 'data:application/plain;base64,' + btoa(header + testData);
     // var url = "data:text/csv;charset=utf-8," + encodeURI(header + testData);
     chrome.downloads.download({
-        url: url,
-        // filename: 'testData/testRecord.csv'
-        filename: 'testData/testRecord.txt'
+      url: url,
+      // filename: 'testData/testRecord.csv'
+      filename: 'testData/testRecord.txt'
     });
 
     localStorage.removeItem("testData");
   }
 });
 
-clearBtn.addEventListener('click', function() {
+clearBtn.addEventListener('click', function () {
   localStorage.removeItem("testData");
+});
+
+automationCheckbox.addEventListener("change", function () {
+  localStorage.setItem("automation", this.checked);
+});
+
+var storedCheckboxState = localStorage.getItem("automation");
+console.log("aa " + storedCheckboxState);
+if (storedCheckboxState !== null) {
+  automationCheckbox.checked = (storedCheckboxState === "true");
+}
+
+// Send message to content script to update checkbox state
+chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+  chrome.tabs.sendMessage(tabs[0].id, { checkboxState: automationCheckbox.checked });
 });
