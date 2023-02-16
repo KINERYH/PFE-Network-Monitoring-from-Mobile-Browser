@@ -28,10 +28,11 @@ localStorage.setItem("automation", "false");
 // const websitesList = [
 //   'google.com',
 //   'youtube.com',
-//   'sohu.com',
 //   'instagram.com',
 //   'twimg.com',
-//   'linkedin.com'
+//   'linkedin.com',
+//   'tistory.com',
+//   'qq.com'
 // ];
 
 const websitesList = ['google.com', 'zunaso.com', 'youtube.com', 'baidu.com', 'bilibili.com', 'facebook.com', 'qq.com', 'twitter.com', 'zhihu.com', 'wikipedia.org', 'amazon.com', 'instagram.com', 'linkedin.com', 'reddit.com', 'whatsapp.com', 'openai.com', 'yahoo.com', 'bing.com', 'taobao.com', '163.com', 'xvideos.com', 'live.com', 'pornhub.com', 'microsoft.com', 'vk.com', 'zoom.us', 'github.com', 'jd.com', 'weibo.com', 'tiktok.com', 'canva.com', 'csdn.net', 'fandom.com', 'office.com', 'naver.com', 'apple.com', 'aliexpress.com', 'yahoo.co.jp', 'xhamster.com', 'paypal.com', 'iqiyi.com', 'spankbang.com', 'pinterest.com', 'mail.ru', 'ebay.com', 'douban.com', 'msn.com', 'imdb.com', 'amazon.in', 'netflix.com', 'adobe.com', 'telegram.org', 'dzen.ru', 'quora.com', 'stackoverflow.com', 'spotify.com', 'aliyun.com', 'xnxx.com', 'myshopify.com', 'tmall.com', 'indeed.com', 'deepl.com', 'twimg.com', 'pixiv.net', 'feishu.cn', 'duckduckgo.com', 'amazon.co.jp', 'msn.cn', 'tencent.com', 'freepik.com', 'etsy.com', 'amazon.co.uk', 'booking.com', 'imgur.com', 'jianshu.com', 'ilovepdf.com', 'twitch.tv', 'atlassian.net', 'force.com', 'dropbox.com', 'office365.com', 'alipay.com', 'discord.com', 'namu.wiki', 't.me', 'wordpress.com', 'nih.gov', 'tradingview.com', 'avito.ru', '3dmgame.com', 'xiaohongshu.com', 'instructure.com', 'onlyfans.com', 'amazonaws.com', 'flipkart.com', 'hao123.com', 'alibaba.com', 'hupu.com', 'cnki.net', 'mediafire.com', 'tistory.com']
@@ -58,13 +59,13 @@ browser.runtime.onMessage.addListener((request, sender) => {
       } else {
         closePreviousTab();
       }
+      var newWebsiteIndex = parseInt(websiteIndex);
+      openNewTab(newWebsiteIndex);
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         var currentTab = tabs[0];
         if (currentTab) {
-          console.log(currentTab.url)
+          console.log(newWebsiteIndex + " " + currentTab.url)
         }
-        var newWebsiteIndex = parseInt(websiteIndex);
-        openNewTab(newWebsiteIndex);
       })
     } catch (err) {
       console.log("Error");
@@ -81,22 +82,25 @@ browser.runtime.onMessage.addListener((request, sender) => {
 
     // Set a timeout function to check if the current tab is taking too much time to load
     const timeout = setTimeout(() => {
-      // Get the current tab and close it
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        var currentTab = tabs[0];
-        if (currentTab) {
-          console.log(currentTab.url + " is taking too much time to load, closing tab...");
-          chrome.tabs.remove(currentTab.id);
-        }
-      });
+      isAutomation = automation();
+      if (isAutomation) {
+        // Get the current tab and close it
+        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+          var currentTab = tabs[0];
+          if (currentTab) {
+            console.log(currentTab.url + " is taking too much time to load, closing tab...");
+            chrome.tabs.remove(currentTab.id);
+          }
+        });
 
-      // Open the next website in a new tab
-      var websiteIndex = localStorage.getItem("websiteIndex");
-      if (websiteIndex == 'null') {
-        websiteIndex = "-1";
+        // Open the next website in a new tab
+        var websiteIndex = localStorage.getItem("websiteIndex");
+        if (websiteIndex == 'null') {
+          websiteIndex = "-1";
+        }
+        var newWebsiteIndex = parseInt(websiteIndex);
+        openNewTab(newWebsiteIndex);
       }
-      var newWebsiteIndex = parseInt(websiteIndex);
-      openNewTab(newWebsiteIndex);
     }, MAX_LOADING_TIME);
 
     // Listen for the "load" event of the current tab and clear the timeout
@@ -129,13 +133,13 @@ function openNewTab(newWebsiteIndex) {
         if (response.status == 200) {
           window.open(websiteUrl, "_blank");
         } else {
-          console.log("Error: website cannot be reached0 - closing tab");
-            openNewTab(newWebsiteIndex);
+          console.log("Error: website cannot be reached - closing tab");
+          openNewTab(newWebsiteIndex);
         }
       })
       .catch(error => {
-        console.log("Error: website cannot be reached1 - closing tab");
-          openNewTab(newWebsiteIndex);
+        console.log("Error: website cannot be reached - closing tab");
+        openNewTab(newWebsiteIndex);
       });
 
   } else {
@@ -167,7 +171,7 @@ function closePreviousTab() {
         } else {
           count++;
           if (count >= 5) {
-            reject('Unable to close tab!');
+            console.log('Unable to close tab!');
           } else {
             setTimeout(tryToCloseTab, 200);
           }
