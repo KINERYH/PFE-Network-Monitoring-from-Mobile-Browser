@@ -46,9 +46,9 @@ if __name__ == "__main__":
 
     # Testing
     testing_measurements_file_path = "../TestData"
-    testing_data_file = "testingData.txt"
-    testing_data_Preprocessed_file = "testingDataPreprocessed.txt"
-    testing_labels_file = "testingDataLabels.txt"
+    testing_data_file = "mobileTestingData.txt"
+    testing_data_Preprocessed_file = "mobileTestingDataPreprocessed.txt"
+    testing_labels_file = "mobileTestingLabels.txt"
 
     testing_data, testing_labels = ntd.get_data(testing_measurements_file_path, testing_data_Preprocessed_file,
                                                 testing_labels_file)
