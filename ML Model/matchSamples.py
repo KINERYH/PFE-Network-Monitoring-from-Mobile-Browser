@@ -20,7 +20,7 @@ def convertTime(path):
 
 
 def matchSamples(recordPath, acquaPath):
-    # the name of the file is the related ACQUA's id of the measurements 
+    # the name of the file is the related ACQUA's id of the measurements
     filename = recordPath.split("\\")[-1]
     userId = os.path.splitext(filename)[0]
 
@@ -48,21 +48,22 @@ def matchSamples(recordPath, acquaPath):
         recordTimeList[i] = datetime.strptime(timeStr, "%a %b %d %Y %H:%M:%S")
 
     outputDf = pd.DataFrame(columns=["downlink", 'rtt'])
-    rtt = "null"
-    downlink = "null"
+    rtt = pd.Series([], dtype=pd.StringDtype())
+    downlink = pd.Series([], dtype=pd.StringDtype())
     # match the samples
     for time in recordTimeList:
         closestTime = min(acquaTimeList, key=lambda x: abs(x - time))
         # check if the closest time is less than 2 minutes away from the time of the record
-        if abs(closestTime - time) < timedelta(seconds=12000):
+        if abs(closestTime - time) < timedelta(seconds=120):
             closestTime = closestTime.strftime("%Y-%m-%d %H:%M:%S.%f")
             row = keyDf[keyDf['DATE'] == closestTime]
             rtt = row['RTT']
             downlink = row['UDP_DOWNLOAD_THROUGHPUT']
-        new_row = pd.DataFrame(
-            {"downlink": ["{:.2f}".format(downlink.values[0] / (10 ** 6))],
-             "rtt": ["{:.2f}".format(rtt.values[0] / (10 ** 6))]})
-        outputDf = pd.concat([outputDf, new_row], ignore_index=True)
+        if not rtt.empty and not downlink.empty:
+            new_row = pd.DataFrame(
+                {"downlink": ["{:.2f}".format(downlink.values[0] / (10 ** 6))],
+                 "rtt": ["{:.2f}".format(rtt.values[0] / (10 ** 6))]})
+            outputDf = pd.concat([outputDf, new_row], ignore_index=True)
 
     outputDf = outputDf.reset_index(drop=True)
     # GT = Ground Truth
