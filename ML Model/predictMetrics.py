@@ -1,6 +1,7 @@
 import tensorflow as tf
 import splittingAndNormalizingTrainingData as sntd
 import dataUtils
+import normalizingTestingData as ntd
 
 
 def model_creation(train_data, train_labels, val_data, val_labels):
@@ -19,6 +20,7 @@ def model_creation(train_data, train_labels, val_data, val_labels):
 
 
 if __name__ == "__main__":
+    # Training
     measurements_file_path = "../TestData"
     training_data_file = "trainingData.txt"
     training_data_Preprocessed_file = "trainingDataPreprocessed.txt"
@@ -40,3 +42,21 @@ if __name__ == "__main__":
     dataUtils.plot_prediction(test_labels, predictions)
 
     dataUtils.plot_heatmaps(test_labels, predictions)
+
+    # Testing
+    testing_measurements_file_path = "../TestData"
+    testing_data_file = "testingData.txt"
+    testing_data_Preprocessed_file = "testingDataPreprocessed.txt"
+    testing_labels_file = "testingDataLabels.txt"
+
+    testing_data, testing_labels = ntd.get_data(testing_measurements_file_path, testing_data_Preprocessed_file,
+                                                testing_labels_file)
+
+    testing_data, testing_labels = ntd.normalize_data(testing_data, testing_labels)
+
+    testing_predictions = model.predict(testing_data)
+
+    dataUtils.plot_prediction(testing_labels, testing_predictions)
+
+    dataUtils.plot_heatmaps(testing_labels, testing_predictions)
+
