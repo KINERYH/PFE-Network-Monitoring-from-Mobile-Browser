@@ -2,6 +2,7 @@ import tensorflow as tf
 import splittingAndNormalizingTrainingData as sntd
 import dataUtils
 import normalizingTestingData as ntd
+import randomForestModel as rfm
 
 
 def model_creation(train_data, train_labels, val_data, val_labels):
@@ -60,3 +61,15 @@ if __name__ == "__main__":
 
     dataUtils.plot_heatmaps(testing_labels, testing_predictions)
 
+    # Random Forest Model
+    # Train
+    rf = rfm.random_forest_model(train_data, train_labels, val_data, val_labels, test_data, test_labels)
+
+    test_predictions = rf.predict(test_data)
+    print("\nPC data Heatmaps")
+    rfm.plot_heatmap_for_rfm(test_labels, test_predictions)
+
+    # Test
+    testing_predictions = rf.predict(testing_data)
+    print("\nMobile data Heatmaps")
+    rfm.plot_heatmap_for_rfm(testing_labels, testing_predictions)
