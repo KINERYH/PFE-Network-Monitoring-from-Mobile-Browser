@@ -1,46 +1,75 @@
 import tensorflow as tf
-from sklearn.model_selection import train_test_split
-from formatData import parse_data
+import splittingAndNormalizingTrainingData as sntd
+import dataUtils
+import normalizingTestingData as ntd
+import randomForestModel as rfm
 
-metrics_file_path = "C:/Users/Yaacoub/Downloads/testData/testRecord.txt"
-ground_truth_file_parth = "./GroundTruthData/measurements_full.csv"
 
-# Load the data and labels
-data, labels = parse_data(metrics_file_path, ground_truth_file_parth)  # a numpy array with the data and the labels
+def model_creation(train_data, train_labels, val_data, val_labels):
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Input(shape=(24, 1)))
+    model.add(tf.keras.layers.Conv1D(100, 3, activation='relu'))
+    model.add(tf.keras.layers.Conv1D(100, 3, activation='relu'))
+    model.add(tf.keras.layers.MaxPooling1D(2))
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(100, activation='relu'))
+    model.add(tf.keras.layers.Dense(2, activation='linear'))
+    model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+    history = model.fit(train_data, train_labels, epochs=100, batch_size=570, validation_data=(val_data, val_labels))
+    # model.save('model.h5')
+    return model, history
 
-# Split the data into training and test sets
-train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=0.2, stratify=labels)
 
-# Split the training set further into training and validation sets
-train_data, val_data, train_labels, val_labels = train_test_split(train_data, train_labels, test_size=0.2,
-                                                                  stratify=train_labels)
+if __name__ == "__main__":
+    # Training
+    measurements_file_path = "../TestData"
+    training_data_file = "trainingData.txt"
+    training_data_Preprocessed_file = "trainingDataPreprocessed.txt"
+    labels_file = "labels.txt"
 
-# Define the model
-model = tf.keras.Sequential()
+    train_data, train_labels, val_data, val_labels, test_data, test_labels = sntd.spit_and_normalize_data(
+        measurements_file_path, training_data_Preprocessed_file, labels_file)
 
-# Add the first 1D CNN layer
-model.add(tf.keras.layers.Conv1D(100, 3, activation='relu', input_shape=(len(train_data), 21)))
+    train_data, train_labels, val_data, val_labels, test_data, test_labels = sntd.normalize_data(train_data,
+                                                                                                 train_labels,
+                                                                                                 val_data, val_labels,
+                                                                                                 test_data, test_labels)
+    model, history = model_creation(train_data, train_labels, val_data, val_labels)
 
-# Add the second 1D CNN layer
-model.add(tf.keras.layers.Conv1D(100, 3, activation='relu'))
+    predictions = model.predict(test_data)
 
-# Add the max pooling layer
-model.add(tf.keras.layers.MaxPooling1D(2))
+    dataUtils.plot_history(history)
 
-# Flatten the output from the max pooling layer
-model.add(tf.keras.layers.Flatten())
+    dataUtils.plot_prediction(test_labels, predictions)
 
-# Add the fully connected layer
-model.add(tf.keras.layers.Dense(100, activation='relu'))
-model.add(tf.keras.layers.Dense(2, activation='linear'))
+    dataUtils.plot_heatmaps(test_labels, predictions)
 
-# Compile the model
-model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+    # Testing
+    testing_measurements_file_path = "../TestData"
+    testing_data_file = "mobileTestingData.txt"
+    testing_data_Preprocessed_file = "mobileTestingDataPreprocessed.txt"
+    testing_labels_file = "mobileTestingLabels.txt"
 
-# Train the model
-history = model.fit(train_data, train_labels, epochs=10, batch_size=32, validation_data=(val_data, val_labels))
+    testing_data, testing_labels = ntd.get_data(testing_measurements_file_path, testing_data_Preprocessed_file,
+                                                testing_labels_file)
 
-# Make predictions on the test data
-predictions = model.predict(test_data)
+    testing_data, testing_labels = ntd.normalize_data(testing_data, testing_labels)
 
-model.save('model.h5')
+    testing_predictions = model.predict(testing_data)
+
+    dataUtils.plot_prediction(testing_labels, testing_predictions)
+
+    dataUtils.plot_heatmaps(testing_labels, testing_predictions)
+
+    # Random Forest Model
+    # Train
+    rf = rfm.random_forest_model(train_data, train_labels, val_data, val_labels, test_data, test_labels)
+
+    test_predictions = rf.predict(test_data)
+    print("\nPC data Heatmaps")
+    rfm.plot_heatmap_for_rfm(test_labels, test_predictions)
+
+    # Test
+    testing_predictions = rf.predict(testing_data)
+    print("\nMobile data Heatmaps")
+    rfm.plot_heatmap_for_rfm(testing_labels, testing_predictions)

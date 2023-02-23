@@ -4,6 +4,12 @@ import pandas as pd
 
 
 # Function one-time use when we obtain a new ACQUA's dataset (UTC -> UTC+1)
+pc_data_file = "1189fa8f-02c4-4054-bd5b-59e3689e3cb3.txt"
+mobile_data_file = "36ebc322-43db-48a6-8987-37061d99bfb4.txt"
+
+p = "a0abf7f8-6d92-48d5-8ec3-2ee4488c358c.txt"
+
+# Function one-time use when we obtain a new ACQUA's dataset
 def convertTime(path):
     # import the .csv file in a dataframe
     df = pd.read_csv(path, sep=";")
@@ -72,5 +78,5 @@ def matchSamples(recordPath, acquaPath):
     # newDF.to_csv("prova.csv", index=False, sep=";")
 
 
-matchSamples("a0abf7f8-6d92-48d5-8ec3-2ee4488c358c.txt", "measurements_full.csv")
+matchSamples(p, "measurements_full.csv")
 # convertTime("measurements_full.csv")
