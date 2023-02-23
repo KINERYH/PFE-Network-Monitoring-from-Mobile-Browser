@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 def random_forest_model(train_data, train_labels, val_data, val_labels, test_data, test_labels):
     # Define the Random Forest regressor model
-    rf = RandomForestRegressor(n_estimators=100, random_state=42)
+    rf = RandomForestRegressor(n_estimators=700, random_state=42)
 
     # Train the model on the training data
     rf.fit(train_data, train_labels)

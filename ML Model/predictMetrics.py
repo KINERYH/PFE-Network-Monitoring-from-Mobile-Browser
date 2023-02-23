@@ -8,14 +8,14 @@ import randomForestModel as rfm
 def model_creation(train_data, train_labels, val_data, val_labels):
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Input(shape=(24, 1)))
-    model.add(tf.keras.layers.Conv1D(100, 3, activation='relu'))
-    model.add(tf.keras.layers.Conv1D(100, 3, activation='relu'))
+    model.add(tf.keras.layers.Conv1D(400, 3, activation='relu'))
+    model.add(tf.keras.layers.Conv1D(400, 3, activation='relu'))
     model.add(tf.keras.layers.MaxPooling1D(2))
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(100, activation='relu'))
     model.add(tf.keras.layers.Dense(2, activation='linear'))
     model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
-    history = model.fit(train_data, train_labels, epochs=100, batch_size=570, validation_data=(val_data, val_labels))
+    history = model.fit(train_data, train_labels, epochs=50, batch_size=128, validation_data=(val_data, val_labels))
     # model.save('model.h5')
     return model, history
 
