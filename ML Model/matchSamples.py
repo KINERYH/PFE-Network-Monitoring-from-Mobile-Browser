@@ -2,6 +2,8 @@ import os
 from datetime import datetime, timedelta
 import pandas as pd
 
+
+# Function one-time use when we obtain a new ACQUA's dataset (UTC -> UTC+1)
 pc_data_file = "1189fa8f-02c4-4054-bd5b-59e3689e3cb3.txt"
 mobile_data_file = "36ebc322-43db-48a6-8987-37061d99bfb4.txt"
 
@@ -24,7 +26,7 @@ def convertTime(path):
 
 
 def matchSamples(recordPath, acquaPath):
-    # the name of the file is the related ACQUA's id of the measurements 
+    # the name of the file is the related ACQUA's id of the measurements
     filename = recordPath.split("\\")[-1]
     userId = os.path.splitext(filename)[0]
 
@@ -33,12 +35,12 @@ def matchSamples(recordPath, acquaPath):
     keyDf = keyDf[["USER_ID", "DATE", "RTT", "UDP_DOWNLOAD_THROUGHPUT"]]
 
     acquaTimeList = []
-    acquaTimeList1 = keyDf['DATE'].tolist()
+    acquaTimeListTemp = keyDf['DATE'].tolist()
     UDP_Download_Throughput_List = keyDf['UDP_DOWNLOAD_THROUGHPUT'].tolist()
 
-    for i in range(len(acquaTimeList1)):
+    for i in range(len(acquaTimeListTemp)):
         if UDP_Download_Throughput_List[i] > 0:
-            acquaTimeList.append(datetime.strptime(acquaTimeList1[i], "%Y-%m-%d %H:%M:%S.%f"))
+            acquaTimeList.append(datetime.strptime(acquaTimeListTemp[i], "%Y-%m-%d %H:%M:%S.%f"))
 
     recordDf = pd.read_csv(recordPath)
     recordTimeList = recordDf['date'].tolist()
@@ -52,8 +54,8 @@ def matchSamples(recordPath, acquaPath):
         recordTimeList[i] = datetime.strptime(timeStr, "%a %b %d %Y %H:%M:%S")
 
     outputDf = pd.DataFrame(columns=["downlink", 'rtt'])
-    rtt = "null"
-    downlink = "null"
+    rtt = pd.Series([], dtype=pd.StringDtype())
+    downlink = pd.Series([], dtype=pd.StringDtype())
     # match the samples
     for time in recordTimeList:
         closestTime = min(acquaTimeList, key=lambda x: abs(x - time))
@@ -61,16 +63,17 @@ def matchSamples(recordPath, acquaPath):
         if abs(closestTime - time) < timedelta(seconds=120):
             closestTime = closestTime.strftime("%Y-%m-%d %H:%M:%S.%f")
             row = keyDf[keyDf['DATE'] == closestTime]
-            # print(row)
             rtt = row['RTT']
             downlink = row['UDP_DOWNLOAD_THROUGHPUT']
-        new_row = pd.DataFrame(
-            {"downlink": ["{:.2f}".format(downlink.values[0] / (10 ** 6))],
-             "rtt": ["{:.2f}".format(rtt.values[0] / (10 ** 6))]})
-        outputDf = pd.concat([outputDf, new_row], ignore_index=True)
+        if not rtt.empty and not downlink.empty:
+            new_row = pd.DataFrame(
+                {"downlink": ["{:.2f}".format(downlink.values[0] / (10 ** 6))],
+                 "rtt": ["{:.2f}".format(rtt.values[0] / (10 ** 6))]})
+            outputDf = pd.concat([outputDf, new_row], ignore_index=True)
 
     outputDf = outputDf.reset_index(drop=True)
-    outputDf.to_csv(userId + "_GTS.csv", sep=",", index=False)
+    # GT = Ground Truth
+    outputDf.to_csv(userId + "_GT.csv", sep=",", index=False)
 
     # newDF.to_csv("prova.csv", index=False, sep=";")
 
